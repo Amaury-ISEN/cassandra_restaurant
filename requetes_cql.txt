@@ -1,0 +1,46 @@
+Connexion dans le CQLSH du bash cassandra :
+cqlsh [127.0.0.1] -u cassandra -p password123
+
+CREATE KEYSPACE IF NOT EXISTS resto WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 3};
+
+USE resto;
+
+CREATE TABLE restaurant
+(
+	id int,
+	name varchar,
+	borough varchar,
+	buildingnum varchar,
+	street varchar,
+	zipcode int,
+	phone text,
+	cuisinetype varchar,
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE inspection
+(
+	idrestaurant int,
+	inspectiondate date,
+	violationcode varchar,
+	violationcodedescription varchar,
+	criticalflag varchar,
+	score int,
+	grade varchar,
+	PRIMARY KEY (idrestaurant, inspectiondate)
+);
+
+CREATE INDEX IF NOT EXISTS cuisinetype_index ON resto.restaurant (cuisinetype);
+
+CREATE INDEX IF NOT EXISTS grade_index ON resto.inspection (grade);
+
+Import des csv dans le container :
+docker cp "./data/restaurants.csv" cassandra_1:/
+docker cp "./data/restaurants_inspections.csv" cassandra_1:/
+
+
+# Importer les fichiers dans le conteneur à partir de docker grâceà la commande suivante :
+# (Il faut mettre les csv dans le sous-dossier data du docker volume.)
+COPY Restaurant (id, name, borough, buildingnum, street, zipcode, phone, cuisinetype) FROM 'data/restaurants.csv' WITH DELIMITER=',';
+
+COPY Inspection (idrestaurant, inspectiondate, violationcode, violationcodedescription, criticalflag, score, grade) FROM 'data/restaurants_inspections.csv' WITH DELIMITER=',';
